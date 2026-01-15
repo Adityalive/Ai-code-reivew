@@ -7,11 +7,18 @@ import cors from "cors";
 import reviewRoute from "./src/routes/review.route.js";
 
 const app = express();
+
+// IMPORTANT: Deployment platforms provide the PORT via environment variables.
+// Do not hardcode 3000 as the only option.
 const PORT = process.env.PORT || 3000;
 
-// 1. CORS configuration - MUST BE FIRST
+// 1. Updated CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:5173', 
+  // Replace localhost with your actual Vercel frontend URL or use an array for both
+  origin: [
+    'http://localhost:5173', 
+    'https://your-frontend-app.vercel.app' // Add your deployed frontend URL here
+  ],
   methods: ['GET', 'POST'],
   credentials: true,
   optionsSuccessStatus: 200
@@ -19,32 +26,32 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// 2. Body parser middleware - MUST BE BEFORE ROUTES
+// 2. Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 3. Add logging middleware to debug
+// 3. Logging (Keep this for debugging production logs)
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
-  console.log('Body:', req.body);
   next();
 });
 
 // 4. Routes
 app.use("/api/review", reviewRoute);
 
-// 5. Health check endpoint
+// 5. Health check
 app.get("/health", (req, res) => {
   res.json({ status: "Server is running", port: PORT });
 });
 
-// 6. Error handling middleware
+// 6. Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!', message: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+// IMPORTANT: Bind to 0.0.0.0 for external access on many cloud providers
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port: ${PORT}`);
   console.log(`✅ GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? 'Found' : 'Missing'}`);
 });
