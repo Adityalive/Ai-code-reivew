@@ -14,16 +14,13 @@ const PORT = process.env.PORT || 3000;
 
 // 1. Updated CORS configuration
 const corsOptions = {
-  // Replace localhost with your actual Vercel frontend URL or use an array for both
   origin: [
     'http://localhost:5173', 
-    'https://your-frontend-app.vercel.app' // Add your deployed frontend URL here
+    'https://ai-code-reviewer-frontend.vercel.app' // Your actual Vercel URL
   ],
-  methods: ['GET', 'POST'],
-  credentials: true,
-  optionsSuccessStatus: 200
+  credentials: true
 };
-
+app.use(cors(corsOptions));
 app.use(cors(corsOptions));
 
 // 2. Body parser middleware
