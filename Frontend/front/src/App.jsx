@@ -7,6 +7,10 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Update this URL to your actual Render backend URL
+  // If you use VITE, you can set this in a .env file as VITE_API_URL
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
   const handleSubmit = async () => {
     if (!code.trim()) {
       setError("Please enter some code to review");
@@ -18,11 +22,17 @@ function App() {
     setReview("");
 
     try {
-      const res = await axios.post("http://localhost:3000/api/review", { code });
+      // Use the dynamic API_BASE_URL instead of a hardcoded localhost
+      const res = await axios.post(`${API_BASE_URL}/api/review`, { code }, {
+        withCredentials: true // Ensures cookies/headers are sent if needed
+      });
       setReview(res.data.review); 
     } catch (err) {
       console.error("Error:", err);
-      setError(err.response?.data?.error || "Error fetching review. Make sure the backend is running.");
+      // More specific error handling for CORS or Network issues
+      const errorMessage = err.response?.data?.error || 
+                           (err.code === "ERR_NETWORK" ? "Connection failed. Is the backend server awake?" : "Error fetching review.");
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -35,10 +45,7 @@ function App() {
   };
 
   return (
-    // Main Container: Deep gray background with full-screen height and padding
     <div className="min-h-screen bg-gray-950 text-gray-100 p-8">
-      
-      {/* Header (Kept full width for visual anchor) */}
       <div className="w-full max-w-7xl mx-auto mb-8">
           <h1 className="text-3xl font-bold text-gray-100 flex items-center">
             <span className="text-blue-400 text-4xl mr-3">AI Code Reviewer</span>
@@ -48,16 +55,10 @@ function App() {
           </p>
       </div>
 
-      {/* Main Content Grid: Side-by-Side Layout */}
-      {/* Use grid for the two main panels (Input and Review) */}
       <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* === LEFT COLUMN: Code Input Panel === */}
         <div className="flex flex-col">
             <h2 className="text-xl font-semibold mb-3 text-gray-300">Your Code (Input)</h2>
             <div className="flex-1 bg-gray-800 rounded-xl shadow-xl border border-gray-700/70 p-6 flex flex-col">
-                
-                {/* Textarea stretches to fill available height */}
                 <textarea
                     id="code-input"
                     className="flex-1 min-h-[300px] border border-gray-600 rounded-lg p-4 font-mono text-sm text-gray-100 bg-gray-700 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all resize-none mb-4"
@@ -65,9 +66,7 @@ function App() {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                 />
-
                 <div className="flex gap-4">
-                    {/* Primary Button */}
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !code.trim()}
@@ -85,8 +84,6 @@ function App() {
                             "Review Code"
                         )}
                     </button>
-                    
-                    {/* Secondary Button */}
                     <button
                         onClick={handleClear}
                         disabled={loading}
@@ -95,8 +92,6 @@ function App() {
                         Clear
                     </button>
                 </div>
-
-                {/* Error Message (Positioned within the left panel) */}
                 {error && (
                     <div className="bg-red-900/50 border border-red-700 p-4 rounded-lg shadow-md mt-4">
                         <p className="text-red-400 font-bold">⚠️ Error</p>
@@ -106,14 +101,9 @@ function App() {
             </div>
         </div>
 
-
-        {/* === RIGHT COLUMN: Review Output Panel === */}
-        <div className="flex flex-col Rubik ">
+        <div className="flex flex-col">
             <h2 className="text-xl font-semibold mb-3 text-gray-300">Code Review Results</h2>
-            
-            {/* Conditional Rendering for Review/Placeholder */}
             {review ? (
-                // Review Content
                 <div className="flex-1 bg-gray-800 p-6 rounded-xl border border-gray-700/70 shadow-xl overflow-y-auto">
                     <div className="flex items-start space-x-3 mb-4">
                         <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
@@ -123,13 +113,11 @@ function App() {
                             AI Review Response
                         </h3>
                     </div>
-                    {/* The whitespace-pre-wrap ensures the formatting from the API response is preserved */}
-                    <div className="text-gray-300 text-xl leading-relaxed whitespace-pre-wrap rubix">
+                    <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
                         {review}
                     </div>
                 </div>
             ) : (
-                // Placeholder when no review is available
                 <div className="flex-1 flex items-center justify-center bg-gray-800 p-6 rounded-xl border border-gray-700/70 shadow-xl">
                     <p className="text-gray-500 text-center">
                         The review results will appear here after you submit your code.
